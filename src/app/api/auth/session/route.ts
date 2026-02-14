@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { adminAuth } from '@/lib/firebase/admin'
+import { ADMIN_EMAILS } from '@/middleware'
 
 export async function POST(req: NextRequest) {
   try {
@@ -12,9 +13,11 @@ export async function POST(req: NextRequest) {
     // Verify the ID token
     const decoded = await adminAuth.verifyIdToken(idToken)
 
-    // Check user role from custom claims or Firestore
+    // Check user role: admin emails take priority, then custom claims, then Firestore
     let role = 'customer'
-    if (decoded.admin === true || decoded.role === 'admin') {
+    if (decoded.email && ADMIN_EMAILS.includes(decoded.email.toLowerCase())) {
+      role = 'admin'
+    } else if (decoded.admin === true || decoded.role === 'admin') {
       role = 'admin'
     } else {
       // Check Firestore for role

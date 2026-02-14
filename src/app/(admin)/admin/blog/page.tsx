@@ -3,90 +3,21 @@
 import { useState, useMemo } from 'react'
 import Link from 'next/link'
 import { Plus, Search, Pencil, Trash2, FileText, Calendar } from 'lucide-react'
-import { formatDate } from '@/lib/utils'
+import { toast } from 'sonner'
+import { Button } from '@/components/ui/button'
+import { useFirestoreQuery } from '@/hooks/use-firestore-query'
+import { getAllPosts, deleteBlogPost } from '@/lib/firebase/services/blog'
+import { relativeTime } from '@/lib/admin-utils'
+import type { BlogPost } from '@/types'
 
 // --------------------------------------------------
-// Sample blog data (matches store blog page)
+// Tabs
 // --------------------------------------------------
 
-interface BlogPost {
-  id: string
-  slug: string
-  title: string
-  excerpt: string
-  tags: string[]
-  status: 'published' | 'draft'
-  date: string
-  author: string
-}
-
-const SAMPLE_POSTS: BlogPost[] = [
-  {
-    id: 'blog-001',
-    slug: 'valentines-day-flowers-guide',
-    title: "Valentine's Day 2026: The Ultimate Flower Guide",
-    excerpt:
-      "From classic red roses to unexpected blooms, discover the perfect flowers to express your love this Valentine's Day.",
-    tags: ['Valentines', 'Gift Guide'],
-    status: 'published',
-    date: '2026-02-01',
-    author: 'Emma Rose',
-  },
-  {
-    id: 'blog-002',
-    slug: 'how-to-keep-flowers-fresh',
-    title: '10 Expert Tips to Keep Your Flowers Fresh Longer',
-    excerpt:
-      'Our florists share their top secrets for extending the life of your cut flowers by up to two weeks.',
-    tags: ['Care Tips', 'How To'],
-    status: 'published',
-    date: '2026-01-20',
-    author: 'Emma Rose',
-  },
-  {
-    id: 'blog-003',
-    slug: 'spring-flower-trends-2026',
-    title: 'Spring 2026 Flower Trends: What to Expect',
-    excerpt:
-      'From bold colour palettes to sustainable floristry, here are the trends shaping spring arrangements this year.',
-    tags: ['Trends', 'Seasonal'],
-    status: 'published',
-    date: '2026-01-15',
-    author: 'Sophie Green',
-  },
-  {
-    id: 'blog-004',
-    slug: 'wedding-flower-ideas',
-    title: 'Wedding Flowers: A Complete Planning Guide',
-    excerpt:
-      'Everything you need to know about choosing the perfect flowers for your big day, from bouquets to centrepieces.',
-    tags: ['Wedding', 'Planning'],
-    status: 'published',
-    date: '2026-01-10',
-    author: 'Emma Rose',
-  },
-  {
-    id: 'blog-005',
-    slug: 'best-indoor-plants-beginners',
-    title: 'Best Indoor Plants for Beginners: A No-Fuss Guide',
-    excerpt:
-      "New to plant parenthood? These five houseplants are virtually indestructible and will thrive in any home.",
-    tags: ['Plants', 'Beginners'],
-    status: 'draft',
-    date: '2025-12-28',
-    author: 'Sophie Green',
-  },
-  {
-    id: 'blog-006',
-    slug: 'language-of-flowers',
-    title: 'The Language of Flowers: What Each Bloom Means',
-    excerpt:
-      'Roses for love, lilies for sympathy — discover the hidden meanings behind the most popular flowers.',
-    tags: ['Education', 'History'],
-    status: 'published',
-    date: '2025-12-15',
-    author: 'Emma Rose',
-  },
+const TABS = [
+  { key: 'all', label: 'All' },
+  { key: 'published', label: 'Published' },
+  { key: 'draft', label: 'Draft' },
 ]
 
 // --------------------------------------------------
@@ -94,23 +25,56 @@ const SAMPLE_POSTS: BlogPost[] = [
 // --------------------------------------------------
 
 export default function AdminBlogPage() {
+  const { data: posts, loading, refetch } = useFirestoreQuery<BlogPost[]>(getAllPosts, [])
   const [search, setSearch] = useState('')
-  const [posts, setPosts] = useState<BlogPost[]>(SAMPLE_POSTS)
+  const [activeTab, setActiveTab] = useState('all')
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null)
 
   const filteredPosts = useMemo(() => {
-    return posts.filter((post) =>
-      post.title.toLowerCase().includes(search.toLowerCase())
-    )
-  }, [search, posts])
+    if (!posts) return []
+    return posts.filter((post) => {
+      // Tab filter
+      if (activeTab === 'published' && !post.isPublished) return false
+      if (activeTab === 'draft' && post.isPublished) return false
+      // Search
+      if (search && !post.title.toLowerCase().includes(search.toLowerCase())) return false
+      return true
+    })
+  }, [posts, search, activeTab])
 
-  const handleDelete = (postId: string) => {
-    setPosts((prev) => prev.filter((p) => p.id !== postId))
-    setDeleteConfirmId(null)
+  const tabCounts = useMemo(() => {
+    if (!posts) return { all: 0, published: 0, draft: 0 }
+    return {
+      all: posts.length,
+      published: posts.filter((p) => p.isPublished).length,
+      draft: posts.filter((p) => !p.isPublished).length,
+    }
+  }, [posts])
+
+  const handleDelete = async (postId: string) => {
+    try {
+      await deleteBlogPost(postId)
+      toast.success('Blog post deleted.')
+      setDeleteConfirmId(null)
+      refetch()
+    } catch {
+      toast.error('Failed to delete blog post.')
+    }
   }
 
-  const publishedCount = posts.filter((p) => p.status === 'published').length
-  const draftCount = posts.filter((p) => p.status === 'draft').length
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Blog Posts</h1>
+          <p className="text-sm text-muted-foreground mt-1">Loading blog posts...</p>
+        </div>
+        <div className="bg-white rounded-xl border border-gray-200 p-12 shadow-sm animate-pulse">
+          <div className="h-64 bg-gray-100 rounded" />
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6">
@@ -119,29 +83,59 @@ export default function AdminBlogPage() {
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Blog Posts</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Manage your blog content ({posts.length} posts &middot; {publishedCount} published &middot; {draftCount} drafts)
+            Manage your blog content ({tabCounts.all} posts &middot; {tabCounts.published} published &middot; {tabCounts.draft} drafts)
           </p>
         </div>
-        <Link
-          href="/admin/blog/new"
-          className="inline-flex items-center gap-2 bg-primary text-white px-5 py-2.5 rounded-lg font-medium hover:bg-primary-dark transition-colors shadow-sm"
-        >
-          <Plus className="h-4 w-4" />
-          New Post
+        <Link href="/admin/blog/new">
+          <Button>
+            <Plus className="h-4 w-4" />
+            New Post
+          </Button>
         </Link>
       </div>
 
-      {/* Search */}
-      <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-          <input
-            type="text"
-            placeholder="Search posts by title..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors"
-          />
+      {/* Tabs */}
+      <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
+        <div className="flex overflow-x-auto border-b border-gray-200">
+          {TABS.map((tab) => (
+            <button
+              key={tab.key}
+              onClick={() => setActiveTab(tab.key)}
+              className={`
+                flex items-center gap-2 px-5 py-3.5 text-sm font-medium whitespace-nowrap border-b-2 transition-colors
+                ${
+                  activeTab === tab.key
+                    ? 'border-primary text-primary'
+                    : 'border-transparent text-muted-foreground hover:text-gray-700 hover:border-gray-300'
+                }
+              `}
+            >
+              {tab.label}
+              <span
+                className={`inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full text-xs font-bold ${
+                  activeTab === tab.key
+                    ? 'bg-primary/10 text-primary'
+                    : 'bg-gray-100 text-gray-500'
+                }`}
+              >
+                {tabCounts[tab.key as keyof typeof tabCounts]}
+              </span>
+            </button>
+          ))}
+        </div>
+
+        {/* Search */}
+        <div className="p-4">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search posts by title..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors"
+            />
+          </div>
         </div>
       </div>
 
@@ -155,6 +149,12 @@ export default function AdminBlogPage() {
                   Title
                 </th>
                 <th className="text-left px-6 py-3.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                  Slug
+                </th>
+                <th className="text-left px-6 py-3.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                  Author
+                </th>
+                <th className="text-left px-6 py-3.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                   Tags
                 </th>
                 <th className="text-left px-6 py-3.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
@@ -162,9 +162,6 @@ export default function AdminBlogPage() {
                 </th>
                 <th className="text-left px-6 py-3.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                   Date
-                </th>
-                <th className="text-left px-6 py-3.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                  Author
                 </th>
                 <th className="text-right px-6 py-3.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                   Actions
@@ -185,10 +182,20 @@ export default function AdminBlogPage() {
                       </div>
                       <div className="min-w-0">
                         <p className="font-medium text-gray-900 truncate max-w-[280px]">{post.title}</p>
-                        <p className="text-xs text-muted-foreground truncate max-w-[280px]">{post.excerpt}</p>
+                        {post.excerpt && (
+                          <p className="text-xs text-muted-foreground truncate max-w-[280px]">{post.excerpt}</p>
+                        )}
                       </div>
                     </div>
                   </td>
+
+                  {/* Slug */}
+                  <td className="px-6 py-4">
+                    <span className="text-xs text-gray-500 font-mono">{post.slug}</span>
+                  </td>
+
+                  {/* Author */}
+                  <td className="px-6 py-4 text-gray-700">{post.authorName || '-'}</td>
 
                   {/* Tags */}
                   <td className="px-6 py-4">
@@ -206,12 +213,12 @@ export default function AdminBlogPage() {
 
                   {/* Status */}
                   <td className="px-6 py-4">
-                    {post.status === 'published' ? (
+                    {post.isPublished ? (
                       <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
                         Published
                       </span>
                     ) : (
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
                         Draft
                       </span>
                     )}
@@ -219,14 +226,11 @@ export default function AdminBlogPage() {
 
                   {/* Date */}
                   <td className="px-6 py-4">
-                    <div className="flex items-center gap-1.5 text-gray-500">
+                    <div className="flex items-center gap-1.5 text-gray-500 text-xs">
                       <Calendar className="h-3.5 w-3.5 text-gray-400" />
-                      {formatDate(post.date)}
+                      {relativeTime(post.createdAt)}
                     </div>
                   </td>
-
-                  {/* Author */}
-                  <td className="px-6 py-4 text-gray-700">{post.author}</td>
 
                   {/* Actions */}
                   <td className="px-6 py-4 text-right">
@@ -269,7 +273,7 @@ export default function AdminBlogPage() {
 
               {filteredPosts.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="px-6 py-16 text-center">
+                  <td colSpan={7} className="px-6 py-16 text-center">
                     <p className="text-muted-foreground text-sm">No blog posts found matching your search.</p>
                   </td>
                 </tr>

@@ -355,6 +355,39 @@ export interface LocationPage {
 }
 
 // ============================================
+// Store Settings
+// ============================================
+
+export interface StoreSettings {
+  id: string
+  storeName: string
+  storeEmail: string
+  storePhone: string
+  storeAddress: {
+    street: string
+    city: string
+    postcode: string
+    country: string
+  }
+  freeDeliveryThreshold: number
+  sameDayCutoff: string
+  nextDayCutoff: string
+  stripePublishableKey: string
+  stripeSecretKey: string
+  emailProvider: 'none' | 'smtp' | 'sendgrid' | 'resend'
+  smtpHost: string
+  smtpPort: number
+  smtpUser: string
+  smtpPass: string
+  sendgridApiKey: string
+  resendApiKey: string
+  fromEmail: string
+  fromName: string
+  adminEmails: string[]
+  updatedAt?: Timestamp
+}
+
+// ============================================
 // Cart (Client-side)
 // ============================================
 
