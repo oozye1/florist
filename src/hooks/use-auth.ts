@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { onAuthStateChanged, type User } from 'firebase/auth'
 import { doc, getDoc } from 'firebase/firestore'
-import { auth, db } from '@/lib/firebase/config'
+import { auth, getClientDb } from '@/lib/firebase/config'
 import type { UserProfile } from '@/types'
 
 export function useAuth() {
@@ -17,7 +17,7 @@ export function useAuth() {
 
       if (firebaseUser) {
         try {
-          const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid))
+          const userDoc = await getDoc(doc(getClientDb(), 'users', firebaseUser.uid))
           if (userDoc.exists()) {
             setProfile(userDoc.data() as UserProfile)
           }

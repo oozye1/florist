@@ -12,7 +12,7 @@ import {
   type User,
 } from 'firebase/auth'
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore'
-import { auth, db } from './config'
+import { auth, getClientDb } from './config'
 
 export { onAuthStateChanged, type User }
 
@@ -21,7 +21,7 @@ export async function signUp(email: string, password: string, fullName: string) 
   await updateProfile(credential.user, { displayName: fullName })
 
   // Create user document in Firestore
-  await setDoc(doc(db, 'users', credential.user.uid), {
+  await setDoc(doc(getClientDb(), 'users', credential.user.uid), {
     uid: credential.user.uid,
     email,
     fullName,
@@ -44,7 +44,7 @@ export async function signInWithGoogle() {
 
   // Create user doc if it doesn't exist
   await setDoc(
-    doc(db, 'users', credential.user.uid),
+    doc(getClientDb(), 'users', credential.user.uid),
     {
       uid: credential.user.uid,
       email: credential.user.email,

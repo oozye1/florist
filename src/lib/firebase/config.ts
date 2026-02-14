@@ -13,6 +13,9 @@ const firebaseConfig = {
 }
 
 let _app: FirebaseApp | null = null
+let _auth: Auth | null = null
+let _db: Firestore | null = null
+let _storage: FirebaseStorage | null = null
 
 function getApp(): FirebaseApp {
   if (_app) return _app
@@ -27,21 +30,35 @@ function getApp(): FirebaseApp {
   return _app
 }
 
+/** Returns the real Auth instance (safe for all Firebase SDK functions) */
+export function getClientAuth(): Auth {
+  if (!_auth) _auth = getAuth(getApp())
+  return _auth
+}
+
+/** Returns the real Firestore instance (safe for doc/collection/etc.) */
+export function getClientDb(): Firestore {
+  if (!_db) _db = getFirestore(getApp())
+  return _db
+}
+
+/** Returns the real Storage instance */
+export function getClientStorage(): FirebaseStorage {
+  if (!_storage) _storage = getStorage(getApp())
+  return _storage
+}
+
+// Proxy export for auth — works fine because auth methods are called as auth.method()
 export const auth: Auth = new Proxy({} as Auth, {
   get(_, prop) {
-    return (getAuth(getApp()) as unknown as Record<string | symbol, unknown>)[prop]
+    return (getClientAuth() as unknown as Record<string | symbol, unknown>)[prop]
   },
 })
 
-export const db: Firestore = new Proxy({} as Firestore, {
-  get(_, prop) {
-    return (getFirestore(getApp()) as unknown as Record<string | symbol, unknown>)[prop]
-  },
-})
-
+// Storage proxy — works fine because storage methods are called as storage.method()
 export const storage: FirebaseStorage = new Proxy({} as FirebaseStorage, {
   get(_, prop) {
-    return (getStorage(getApp()) as unknown as Record<string | symbol, unknown>)[prop]
+    return (getClientStorage() as unknown as Record<string | symbol, unknown>)[prop]
   },
 })
 
