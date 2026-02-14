@@ -6,6 +6,7 @@ import { SEED_PRODUCTS } from '@/lib/seed-data'
 import { CATEGORIES, OCCASIONS } from '@/lib/constants'
 import { formatPrice } from '@/lib/utils'
 import ProductCard from '@/components/store/ProductCard'
+import SortSelect from '@/components/store/SortSelect'
 import type { CategorySlug } from '@/types'
 
 export const metadata: Metadata = {
@@ -190,25 +191,7 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
                 {filtered.length} arrangement{filtered.length !== 1 ? 's' : ''}
               </p>
             </div>
-            <select
-              defaultValue={sort || ''}
-              className="border border-input rounded-lg px-4 py-2 text-sm bg-white"
-              onChange={(e) => {
-                const url = new URL(window.location.href)
-                if (e.target.value) {
-                  url.searchParams.set('sort', e.target.value)
-                } else {
-                  url.searchParams.delete('sort')
-                }
-                window.location.href = url.toString()
-              }}
-            >
-              <option value="">Featured</option>
-              <option value="price_asc">Price: Low to High</option>
-              <option value="price_desc">Price: High to Low</option>
-              <option value="rating">Highest Rated</option>
-              <option value="newest">Newest</option>
-            </select>
+            <SortSelect defaultValue={sort || ''} />
           </div>
 
           {/* Product Grid */}
