@@ -23,6 +23,7 @@ import {
   ChevronRight,
   Shield,
   RefreshCw,
+  Gift,
 } from 'lucide-react'
 
 const NAV_ITEMS = [
@@ -31,6 +32,7 @@ const NAV_ITEMS = [
   { label: 'Orders', href: '/admin/orders', icon: ShoppingBag },
   { label: 'Customers', href: '/admin/customers', icon: Users },
   { label: 'Coupons', href: '/admin/coupons', icon: Tag },
+  { label: 'Gift Cards', href: '/admin/gift-cards', icon: Gift },
   { label: 'Reviews', href: '/admin/reviews', icon: Star },
   { label: 'Delivery Zones', href: '/admin/delivery-zones', icon: MapPin },
   { label: 'Blog', href: '/admin/blog', icon: FileText },

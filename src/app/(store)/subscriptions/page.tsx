@@ -1,60 +1,115 @@
-import type { Metadata } from 'next'
-import Image from 'next/image'
-import { Button } from '@/components/ui/button'
-import { Check, Flower } from 'lucide-react'
+'use client'
 
-export const metadata: Metadata = {
-  title: 'Flower Subscriptions | Fresh Blooms Delivered Regularly',
-  description:
-    'Subscribe to regular fresh flower deliveries. Choose weekly, fortnightly, or monthly plans. Save up to 25% with our subscription service.',
+import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
+import { Button } from '@/components/ui/button'
+import { Check, Flower, Loader2 } from 'lucide-react'
+import { useAuth } from '@/hooks/use-auth'
+import { getActivePlans } from '@/lib/firebase/services/subscriptions'
+import type { SubscriptionPlan } from '@/types'
+import { formatPrice } from '@/lib/utils'
+import { toast } from 'sonner'
+
+const FREQUENCY_LABELS: Record<string, string> = {
+  weekly: 'Every week',
+  fortnightly: 'Every 2 weeks',
+  monthly: 'Every month',
 }
 
-const PLANS = [
+const FALLBACK_PLANS: (Omit<SubscriptionPlan, 'id' | 'imageUrl' | 'isActive'> & { slug: string })[] = [
   {
     name: 'Weekly Blooms',
-    frequency: 'Every week',
+    slug: 'weekly-blooms',
+    frequency: 'weekly',
     price: 29.99,
     description: 'A fresh, hand-crafted bouquet delivered to your door every week.',
-    features: [
-      'Seasonal fresh flowers',
-      'Free delivery',
-      'Change or skip anytime',
-      'Free flower food sachet',
-    ],
-    popular: false,
   },
   {
     name: 'Fortnightly Delight',
-    frequency: 'Every 2 weeks',
+    slug: 'fortnightly-delight',
+    frequency: 'fortnightly',
     price: 34.99,
     description: 'Beautiful blooms delivered fortnightly — our most popular plan.',
-    features: [
-      'Premium seasonal flowers',
-      'Free delivery',
-      'Change or skip anytime',
-      'Free vase with first delivery',
-      'Exclusive varieties',
-    ],
-    popular: true,
   },
   {
     name: 'Monthly Surprise',
-    frequency: 'Every month',
+    slug: 'monthly-surprise',
+    frequency: 'monthly',
     price: 39.99,
     description: 'A luxurious, show-stopping arrangement delivered once a month.',
-    features: [
-      'Luxury designer arrangement',
-      'Free delivery',
-      'Change or skip anytime',
-      'Premium vase included',
-      'Exclusive seasonal specials',
-      'Priority customer support',
-    ],
-    popular: false,
   },
 ]
 
+const PLAN_FEATURES: Record<string, string[]> = {
+  weekly: [
+    'Seasonal fresh flowers',
+    'Free delivery',
+    'Change or skip anytime',
+    'Free flower food sachet',
+  ],
+  fortnightly: [
+    'Premium seasonal flowers',
+    'Free delivery',
+    'Change or skip anytime',
+    'Free vase with first delivery',
+    'Exclusive varieties',
+  ],
+  monthly: [
+    'Luxury designer arrangement',
+    'Free delivery',
+    'Change or skip anytime',
+    'Premium vase included',
+    'Exclusive seasonal specials',
+    'Priority customer support',
+  ],
+}
+
 export default function SubscriptionsPage() {
+  const router = useRouter()
+  const { user, profile } = useAuth()
+  const [plans, setPlans] = useState<(SubscriptionPlan | typeof FALLBACK_PLANS[number])[]>(FALLBACK_PLANS)
+  const [loadingPlanId, setLoadingPlanId] = useState<string | null>(null)
+
+  useEffect(() => {
+    getActivePlans().then((dbPlans) => {
+      if (dbPlans.length > 0) setPlans(dbPlans)
+    }).catch(() => {})
+  }, [])
+
+  async function handleSubscribe(plan: typeof plans[number]) {
+    if (!user) {
+      router.push('/login?redirect=/subscriptions')
+      return
+    }
+
+    const planId = 'id' in plan ? plan.id : plan.slug
+    setLoadingPlanId(planId)
+
+    try {
+      const res = await fetch('/api/subscriptions/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          planId,
+          planName: plan.name,
+          price: plan.price,
+          frequency: plan.frequency,
+          email: user.email,
+          name: profile?.fullName || user.displayName || '',
+          userId: user.uid,
+        }),
+      })
+
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Failed to create checkout')
+
+      if (data.url) window.location.href = data.url
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Something went wrong')
+      setLoadingPlanId(null)
+    }
+  }
+
   return (
     <div>
       {/* Hero */}
@@ -75,62 +130,71 @@ export default function SubscriptionsPage() {
       {/* Plans */}
       <section className="max-w-6xl mx-auto px-4 py-16">
         <div className="grid md:grid-cols-3 gap-8">
-          {PLANS.map((plan) => (
-            <div
-              key={plan.name}
-              className={`relative rounded-2xl p-8 border-2 transition-all duration-300 ${
-                plan.popular
-                  ? 'border-secondary bg-secondary/5 shadow-lg scale-105'
-                  : 'border-border bg-white hover:border-primary/30'
-              }`}
-            >
-              {plan.popular && (
-                <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-secondary text-white text-xs font-bold px-4 py-1 rounded-full">
-                  Most Popular
-                </span>
-              )}
+          {plans.map((plan) => {
+            const planId = 'id' in plan ? plan.id : plan.slug
+            const isPopular = plan.frequency === 'fortnightly'
+            const features = PLAN_FEATURES[plan.frequency] || PLAN_FEATURES.monthly
 
-              <h3 className="font-serif text-2xl mb-1">{plan.name}</h3>
-              <p className="text-sm text-muted-foreground mb-4">
-                {plan.frequency}
-              </p>
-              <p className="text-4xl font-bold text-primary mb-1">
-                &pound;{plan.price.toFixed(2)}
-              </p>
-              <p className="text-sm text-muted-foreground mb-6">
-                per delivery
-              </p>
-              <p className="text-sm text-muted-foreground mb-6">
-                {plan.description}
-              </p>
-
-              <ul className="space-y-3 mb-8">
-                {plan.features.map((feature) => (
-                  <li key={feature} className="flex items-center gap-2 text-sm">
-                    <Check className="w-4 h-4 text-primary flex-shrink-0" />
-                    {feature}
-                  </li>
-                ))}
-              </ul>
-
-              <Button
-                size="lg"
-                className="w-full"
-                variant={plan.popular ? 'default' : 'outline'}
+            return (
+              <div
+                key={planId}
+                className={`relative rounded-2xl p-8 border-2 transition-all duration-300 ${
+                  isPopular
+                    ? 'border-secondary bg-secondary/5 shadow-lg scale-105'
+                    : 'border-border bg-white hover:border-primary/30'
+                }`}
               >
-                Subscribe Now
-              </Button>
-            </div>
-          ))}
+                {isPopular && (
+                  <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-secondary text-white text-xs font-bold px-4 py-1 rounded-full">
+                    Most Popular
+                  </span>
+                )}
+
+                <h3 className="font-serif text-2xl mb-1">{plan.name}</h3>
+                <p className="text-sm text-muted-foreground mb-4">
+                  {FREQUENCY_LABELS[plan.frequency] || plan.frequency}
+                </p>
+                <p className="text-4xl font-bold text-primary mb-1">
+                  {formatPrice(plan.price)}
+                </p>
+                <p className="text-sm text-muted-foreground mb-6">per delivery</p>
+                <p className="text-sm text-muted-foreground mb-6">{plan.description}</p>
+
+                <ul className="space-y-3 mb-8">
+                  {features.map((feature) => (
+                    <li key={feature} className="flex items-center gap-2 text-sm">
+                      <Check className="w-4 h-4 text-primary flex-shrink-0" />
+                      {feature}
+                    </li>
+                  ))}
+                </ul>
+
+                <Button
+                  size="lg"
+                  className="w-full"
+                  variant={isPopular ? 'default' : 'outline'}
+                  onClick={() => handleSubscribe(plan)}
+                  disabled={loadingPlanId === planId}
+                >
+                  {loadingPlanId === planId ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Redirecting...
+                    </>
+                  ) : (
+                    'Subscribe Now'
+                  )}
+                </Button>
+              </div>
+            )
+          })}
         </div>
       </section>
 
       {/* How it Works */}
       <section className="bg-muted py-16 px-4">
         <div className="max-w-4xl mx-auto">
-          <h2 className="font-serif text-3xl text-center mb-12">
-            How It Works
-          </h2>
+          <h2 className="font-serif text-3xl text-center mb-12">How It Works</h2>
           <div className="grid md:grid-cols-3 gap-8 text-center">
             {[
               { step: '1', title: 'Choose Your Plan', desc: 'Pick the frequency and plan that suits your lifestyle.' },

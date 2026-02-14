@@ -12,6 +12,8 @@ interface CartStore {
   deliveryFee: number
   couponCode: string | null
   discountAmount: number
+  giftCardCode: string | null
+  giftCardAmount: number
 
   addItem: (item: Omit<CartItem, 'quantity'>) => void
   removeItem: (productId: string, variantId?: string) => void
@@ -20,6 +22,8 @@ interface CartStore {
   setDelivery: (date: string, type: DeliveryType, postcode: string, fee: number) => void
   applyCoupon: (code: string, discount: number) => void
   removeCoupon: () => void
+  applyGiftCard: (code: string, amount: number) => void
+  removeGiftCard: () => void
   clearCart: () => void
 
   getSubtotal: () => number
@@ -37,6 +41,8 @@ export const useCart = create<CartStore>()(
       deliveryFee: 0,
       couponCode: null,
       discountAmount: 0,
+      giftCardCode: null,
+      giftCardAmount: 0,
 
       addItem: (item) =>
         set((state) => {
@@ -100,6 +106,11 @@ export const useCart = create<CartStore>()(
 
       removeCoupon: () => set({ couponCode: null, discountAmount: 0 }),
 
+      applyGiftCard: (code, amount) =>
+        set({ giftCardCode: code, giftCardAmount: amount }),
+
+      removeGiftCard: () => set({ giftCardCode: null, giftCardAmount: 0 }),
+
       clearCart: () =>
         set({
           items: [],
@@ -109,6 +120,8 @@ export const useCart = create<CartStore>()(
           deliveryFee: 0,
           couponCode: null,
           discountAmount: 0,
+          giftCardCode: null,
+          giftCardAmount: 0,
         }),
 
       getSubtotal: () => {
@@ -117,9 +130,9 @@ export const useCart = create<CartStore>()(
       },
 
       getTotal: () => {
-        const { items, deliveryFee, discountAmount } = get()
+        const { items, deliveryFee, discountAmount, giftCardAmount } = get()
         const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0)
-        return Math.max(0, subtotal + deliveryFee - discountAmount)
+        return Math.max(0, subtotal + deliveryFee - discountAmount - giftCardAmount)
       },
 
       getItemCount: () => {

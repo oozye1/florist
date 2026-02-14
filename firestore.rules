@@ -1,0 +1,81 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Users: can read/write own doc, admins can read all
+    match /users/{userId} {
+      allow read: if request.auth != null && (request.auth.uid == userId || request.auth.token.email in ['jamesfairfoul@gmail.com', 'amandahardwick68@yahoo.co.uk']);
+      allow create: if request.auth != null && request.auth.uid == userId;
+      allow update: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Products: anyone can read, admins can write
+    match /products/{productId} {
+      allow read: if true;
+      allow write: if request.auth != null && request.auth.token.email in ['jamesfairfoul@gmail.com', 'amandahardwick68@yahoo.co.uk'];
+    }
+
+    // Orders: users read own, admins read/write all
+    match /orders/{orderId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null;
+      allow update: if request.auth != null && request.auth.token.email in ['jamesfairfoul@gmail.com', 'amandahardwick68@yahoo.co.uk'];
+    }
+
+    // Coupons: anyone can read, admins can write
+    match /coupons/{couponId} {
+      allow read: if true;
+      allow write: if request.auth != null && request.auth.token.email in ['jamesfairfoul@gmail.com', 'amandahardwick68@yahoo.co.uk'];
+    }
+
+    // Reviews: anyone can read, authenticated users can create, admins can update/delete
+    match /reviews/{reviewId} {
+      allow read: if true;
+      allow create: if request.auth != null;
+      allow update, delete: if request.auth != null && request.auth.token.email in ['jamesfairfoul@gmail.com', 'amandahardwick68@yahoo.co.uk'];
+    }
+
+    // Blog posts: anyone can read, admins can write
+    match /blog_posts/{postId} {
+      allow read: if true;
+      allow write: if request.auth != null && request.auth.token.email in ['jamesfairfoul@gmail.com', 'amandahardwick68@yahoo.co.uk'];
+    }
+
+    // Subscription plans: anyone can read, admins can write
+    match /subscription_plans/{planId} {
+      allow read: if true;
+      allow write: if request.auth != null && request.auth.token.email in ['jamesfairfoul@gmail.com', 'amandahardwick68@yahoo.co.uk'];
+    }
+
+    // Subscriptions: users read own, admins read/write all
+    match /subscriptions/{subId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && request.auth.token.email in ['jamesfairfoul@gmail.com', 'amandahardwick68@yahoo.co.uk'];
+    }
+
+    // Gift cards: admins can read/write, validated via API routes
+    match /gift_cards/{cardId} {
+      allow read, write: if request.auth != null && request.auth.token.email in ['jamesfairfoul@gmail.com', 'amandahardwick68@yahoo.co.uk'];
+    }
+
+    // Delivery zones: anyone can read, admins can write
+    match /delivery_zones/{zoneId} {
+      allow read: if true;
+      allow write: if request.auth != null && request.auth.token.email in ['jamesfairfoul@gmail.com', 'amandahardwick68@yahoo.co.uk'];
+    }
+
+    // Settings: admins only
+    match /settings/{docId} {
+      allow read, write: if request.auth != null && request.auth.token.email in ['jamesfairfoul@gmail.com', 'amandahardwick68@yahoo.co.uk'];
+    }
+
+    // Contact messages, newsletter: admin read only (writes via Admin SDK)
+    match /contact_messages/{msgId} {
+      allow read: if request.auth != null && request.auth.token.email in ['jamesfairfoul@gmail.com', 'amandahardwick68@yahoo.co.uk'];
+    }
+
+    match /newsletter_subscribers/{subId} {
+      allow read: if request.auth != null && request.auth.token.email in ['jamesfairfoul@gmail.com', 'amandahardwick68@yahoo.co.uk'];
+    }
+  }
+}

@@ -13,9 +13,15 @@ import { toast } from 'sonner'
 
 export default function CheckoutPage() {
   const router = useRouter()
-  const { items, deliveryFee, discountAmount, couponCode, getSubtotal, getTotal, clearCart } = useCart()
+  const {
+    items, deliveryFee, discountAmount, couponCode, getSubtotal, getTotal, clearCart,
+    giftCardCode, giftCardAmount, applyGiftCard, removeGiftCard,
+  } = useCart()
   const [mounted, setMounted] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const [giftCardInput, setGiftCardInput] = useState('')
+  const [giftCardLoading, setGiftCardLoading] = useState(false)
+  const [giftCardError, setGiftCardError] = useState('')
   const [form, setForm] = useState({
     billingName: '',
     billingEmail: '',
@@ -62,6 +68,32 @@ export default function CheckoutPage() {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }))
   }
 
+  async function handleApplyGiftCard() {
+    if (!giftCardInput.trim()) return
+    setGiftCardLoading(true)
+    setGiftCardError('')
+    try {
+      const res = await fetch('/api/gift-cards/validate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: giftCardInput.trim() }),
+      })
+      const data = await res.json()
+      if (!data.valid) {
+        setGiftCardError(data.error || 'Invalid gift card')
+        return
+      }
+      const applyAmount = Math.min(data.balance, subtotal + deliveryCharge - discountAmount)
+      applyGiftCard(giftCardInput.trim().toUpperCase(), applyAmount)
+      setGiftCardInput('')
+      toast.success(`Gift card applied — ${formatPrice(applyAmount)} discount`)
+    } catch {
+      setGiftCardError('Failed to validate gift card')
+    } finally {
+      setGiftCardLoading(false)
+    }
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setIsLoading(true)
@@ -87,6 +119,8 @@ export default function CheckoutPage() {
             postcode: form.deliveryPostcode,
           },
           deliveryInstructions: form.deliveryInstructions,
+          giftCardCode: giftCardCode || undefined,
+          giftCardAmount: giftCardAmount || undefined,
         }),
       })
 
@@ -307,6 +341,41 @@ export default function CheckoutPage() {
                   <span>-{formatPrice(discountAmount)}</span>
                 </div>
               )}
+              {giftCardAmount > 0 && (
+                <div className="flex justify-between text-green-600">
+                  <span className="flex items-center gap-1">
+                    Gift Card
+                    <button onClick={removeGiftCard} className="text-xs text-red-500 hover:underline ml-1">(remove)</button>
+                  </span>
+                  <span>-{formatPrice(giftCardAmount)}</span>
+                </div>
+              )}
+
+              {/* Gift Card Input */}
+              {!giftCardCode && (
+                <div className="pt-2">
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="Gift card code"
+                      value={giftCardInput}
+                      onChange={(e) => { setGiftCardInput(e.target.value); setGiftCardError('') }}
+                      className="text-xs"
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={handleApplyGiftCard}
+                      disabled={giftCardLoading || !giftCardInput.trim()}
+                    >
+                      <Gift className="w-3.5 h-3.5" />
+                      Apply
+                    </Button>
+                  </div>
+                  {giftCardError && <p className="text-xs text-red-500 mt-1">{giftCardError}</p>}
+                </div>
+              )}
+
               <div className="border-t pt-2 flex justify-between font-bold text-lg">
                 <span>Total</span>
                 <span className="text-primary">{formatPrice(total)}</span>

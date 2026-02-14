@@ -46,14 +46,61 @@ export async function POST(req: NextRequest) {
     const metadata = session.metadata || {}
 
     if (!isAdminConfigured()) {
-      console.error('Stripe webhook received but Firebase Admin not configured — order not saved!')
-      return NextResponse.json({ received: true, warning: 'Order not saved — Firebase Admin not configured' })
+      console.error('Stripe webhook received but Firebase Admin not configured — not saved!')
+      return NextResponse.json({ received: true, warning: 'Firebase Admin not configured' })
     }
 
     try {
       const { adminDb } = await import('@/lib/firebase/admin')
 
-      // Parse items from metadata
+      // ── Gift Card Purchase ──
+      if (metadata.type === 'gift_card') {
+        const amount = parseFloat(metadata.amount || '0')
+        const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
+        const seg = () =>
+          Array.from({ length: 4 }, () => chars[Math.floor(Math.random() * chars.length)]).join('')
+        const code = `LB-${seg()}-${seg()}`
+
+        await adminDb.collection('gift_cards').add({
+          code,
+          initialBalance: amount,
+          currentBalance: amount,
+          purchaserId: '',
+          senderName: metadata.senderName || '',
+          senderEmail: metadata.senderEmail || '',
+          recipientName: metadata.recipientName || '',
+          recipientEmail: metadata.recipientEmail || '',
+          message: metadata.message || '',
+          isActive: true,
+          stripeSessionId: session.id,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        })
+
+        console.log(`Gift card ${code} created for £${amount} (session ${session.id})`)
+        return NextResponse.json({ received: true })
+      }
+
+      // ── Subscription Purchase ──
+      if (metadata.type === 'subscription' || session.mode === 'subscription') {
+        const planId = metadata.planId || ''
+        const stripeSubscriptionId = session.subscription as string
+
+        await adminDb.collection('subscriptions').add({
+          userId: metadata.userId || '',
+          planId,
+          status: 'active',
+          stripeSubscriptionId: stripeSubscriptionId || '',
+          startedAt: new Date(),
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        })
+
+        console.log(`Subscription created for plan ${planId} (session ${session.id})`)
+        return NextResponse.json({ received: true })
+      }
+
+      // ── Regular Order ──
       let items: Array<{
         productId: string
         name: string
@@ -83,6 +130,19 @@ export async function POST(req: NextRequest) {
       const totalPaid = (session.amount_total || 0) / 100
       const discountTotal = (session.total_details?.amount_discount || 0) / 100
 
+      // Redeem gift card if one was used
+      const giftCardCode = metadata.giftCardCode
+      const giftCardAmount = parseFloat(metadata.giftCardAmount || '0')
+      if (giftCardCode && giftCardAmount > 0) {
+        try {
+          const { redeemGiftCard } = await import('@/lib/firebase/services/gift-cards')
+          await redeemGiftCard(giftCardCode, giftCardAmount)
+          console.log(`Redeemed £${giftCardAmount} from gift card ${giftCardCode}`)
+        } catch (err) {
+          console.error('Failed to redeem gift card:', err)
+        }
+      }
+
       const orderData = {
         orderNumber: generateOrderNumber(),
         status: 'confirmed',
@@ -91,8 +151,10 @@ export async function POST(req: NextRequest) {
         stripePaymentIntentId: (session.payment_intent as string) || '',
         items: orderItems,
         subtotal,
-        deliveryFee: totalPaid - subtotal + discountTotal,
+        deliveryFee: totalPaid - subtotal + discountTotal + giftCardAmount,
         discountAmount: discountTotal,
+        giftCardCode: giftCardCode || undefined,
+        giftCardAmount: giftCardAmount || undefined,
         total: totalPaid,
         deliveryType: 'next_day',
         deliveryDate: '',
@@ -125,7 +187,34 @@ export async function POST(req: NextRequest) {
       await adminDb.collection('orders').add(orderData)
       console.log(`Order ${orderData.orderNumber} created for session ${session.id}`)
     } catch (err) {
-      console.error('Failed to create order from webhook:', err)
+      console.error('Failed to process webhook:', err)
+    }
+  }
+
+  // Handle subscription cancellation from Stripe
+  if (event.type === 'customer.subscription.deleted') {
+    const subscription = event.data.object as Stripe.Subscription
+
+    if (isAdminConfigured()) {
+      try {
+        const { adminDb } = await import('@/lib/firebase/admin')
+        const snapshot = await adminDb
+          .collection('subscriptions')
+          .where('stripeSubscriptionId', '==', subscription.id)
+          .limit(1)
+          .get()
+
+        if (!snapshot.empty) {
+          await snapshot.docs[0].ref.update({
+            status: 'cancelled',
+            cancelledAt: new Date(),
+            updatedAt: new Date(),
+          })
+          console.log(`Subscription ${subscription.id} cancelled via webhook`)
+        }
+      } catch (err) {
+        console.error('Failed to cancel subscription from webhook:', err)
+      }
     }
   }
 

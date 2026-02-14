@@ -37,12 +37,14 @@ interface CheckoutBody {
     postcode: string
   }
   deliveryInstructions?: string
+  giftCardCode?: string
+  giftCardAmount?: number
 }
 
 export async function POST(req: NextRequest) {
   try {
     const body: CheckoutBody = await req.json()
-    const { items, deliveryFee, discountAmount, couponCode, billingName, billingEmail } = body
+    const { items, deliveryFee, discountAmount, couponCode, billingName, billingEmail, giftCardCode, giftCardAmount } = body
 
     if (!items || items.length === 0) {
       return NextResponse.json({ error: 'Cart is empty' }, { status: 400 })
@@ -79,15 +81,18 @@ export async function POST(req: NextRequest) {
       })
     }
 
-    // Build discounts array if coupon applied
+    // Build discounts array if coupon or gift card applied
+    const totalDiscount = (discountAmount || 0) + (giftCardAmount || 0)
     const discounts: Stripe.Checkout.SessionCreateParams.Discount[] = []
-    if (discountAmount > 0) {
-      // Create a one-off coupon in Stripe for the discount
+    if (totalDiscount > 0) {
+      const parts: string[] = []
+      if (couponCode) parts.push(couponCode)
+      if (giftCardCode) parts.push(`Gift Card`)
       const stripeCoupon = await stripe.coupons.create({
-        amount_off: Math.round(discountAmount * 100),
+        amount_off: Math.round(totalDiscount * 100),
         currency: 'gbp',
         duration: 'once',
-        name: couponCode || 'Discount',
+        name: parts.join(' + ') || 'Discount',
       })
       discounts.push({ coupon: stripeCoupon.id })
     }
@@ -113,6 +118,8 @@ export async function POST(req: NextRequest) {
         deliveryPostcode: body.deliveryAddress.postcode,
         deliveryInstructions: body.deliveryInstructions || '',
         couponCode: couponCode || '',
+        giftCardCode: giftCardCode || '',
+        giftCardAmount: String(giftCardAmount || 0),
         itemsJson: JSON.stringify(
           items.map((i) => ({
             productId: i.productId,
