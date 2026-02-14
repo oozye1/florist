@@ -24,7 +24,7 @@ export const productSchema = z.object({
   flowerTypes: z.string(),
   tags: z.string(),
   images: z.array(z.object({
-    url: z.string().url('Valid URL required'),
+    url: z.string().min(1, 'Image is required'),
     alt: z.string(),
     isPrimary: z.boolean(),
   })).min(1, 'At least one image required'),

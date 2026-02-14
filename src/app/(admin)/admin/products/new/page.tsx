@@ -9,6 +9,7 @@ import { ArrowLeft, Plus, Trash2, ImagePlus, Save } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input, Textarea, Label } from '@/components/ui/input'
+import ImageUpload from '@/components/ui/image-upload'
 import { createProduct } from '@/lib/firebase/services/products'
 import { productSchema, type ProductFormData } from '@/lib/validations/admin'
 import { generateSlug } from '@/lib/utils'
@@ -489,24 +490,58 @@ export default function NewProductPage() {
             {imageFields.map((field, index) => (
               <div
                 key={field.id}
-                className="grid grid-cols-1 md:grid-cols-[1fr_1fr_auto_auto] gap-3 items-end p-4 bg-gray-50 rounded-lg border border-gray-100"
+                className="p-4 bg-gray-50 rounded-lg border border-gray-100 space-y-3"
               >
-                <div className="space-y-2">
-                  <Label htmlFor={`images.${index}.url`}>Image URL</Label>
-                  <Input
-                    id={`images.${index}.url`}
-                    {...register(`images.${index}.url`)}
-                    placeholder="https://images.unsplash.com/..."
-                    error={errors.images?.[index]?.url?.message}
-                  />
-                  {errors.images?.[index]?.url && (
-                    <p className="text-xs text-destructive">
-                      {errors.images[index].url.message}
-                    </p>
-                  )}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <Controller
+                      control={control}
+                      name={`images.${index}.isPrimary`}
+                      render={({ field: radioField }) => (
+                        <input
+                          type="radio"
+                          name="primaryImage"
+                          id={`image-primary-${index}`}
+                          checked={radioField.value}
+                          onChange={() => setPrimaryImage(index)}
+                          className="h-4 w-4 text-primary border-gray-300 focus:ring-primary"
+                        />
+                      )}
+                    />
+                    <Label htmlFor={`image-primary-${index}`} className="text-sm">
+                      {watch(`images.${index}.isPrimary`) ? 'Primary Image' : 'Image'}
+                    </Label>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => removeImage(index)}
+                    disabled={imageFields.length <= 1}
+                    className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
                 </div>
 
-                <div className="space-y-2">
+                <Controller
+                  control={control}
+                  name={`images.${index}.url`}
+                  render={({ field: urlField }) => (
+                    <ImageUpload
+                      value={urlField.value}
+                      onChange={urlField.onChange}
+                      folder="products"
+                    />
+                  )}
+                />
+                {errors.images?.[index]?.url && (
+                  <p className="text-xs text-destructive">
+                    {errors.images[index].url.message}
+                  </p>
+                )}
+
+                <div className="space-y-1.5">
                   <Label htmlFor={`images.${index}.alt`}>Alt Text</Label>
                   <Input
                     id={`images.${index}.alt`}
@@ -514,37 +549,6 @@ export default function NewProductPage() {
                     placeholder="Descriptive alt text"
                   />
                 </div>
-
-                <div className="flex items-center gap-2 h-10">
-                  <Controller
-                    control={control}
-                    name={`images.${index}.isPrimary`}
-                    render={({ field: radioField }) => (
-                      <input
-                        type="radio"
-                        name="primaryImage"
-                        id={`image-primary-${index}`}
-                        checked={radioField.value}
-                        onChange={() => setPrimaryImage(index)}
-                        className="h-4 w-4 text-primary border-gray-300 focus:ring-primary"
-                      />
-                    )}
-                  />
-                  <Label htmlFor={`image-primary-${index}`} className="text-xs whitespace-nowrap">
-                    Primary
-                  </Label>
-                </div>
-
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => removeImage(index)}
-                  disabled={imageFields.length <= 1}
-                  className="text-red-500 hover:text-red-700 hover:bg-red-50"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
               </div>
             ))}
           </div>

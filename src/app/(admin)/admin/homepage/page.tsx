@@ -5,6 +5,7 @@ import { toast } from 'sonner'
 import { Image as ImageIcon, Award, Calendar, MessageSquareQuote, Mail, Plus, Trash2, Save } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input, Textarea, Label } from '@/components/ui/input'
+import ImageUpload from '@/components/ui/image-upload'
 import { getHomepageContent, updateHomepageContent } from '@/lib/firebase/services/homepage'
 import { OCCASIONS } from '@/lib/constants'
 import type { HeroContent, USPItem, OccasionItem, TestimonialItem, NewsletterContent } from '@/types'
@@ -127,8 +128,12 @@ export default function AdminHomepagePage() {
         <div className="space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <Label>Background Image URL</Label>
-              <Input value={hero.imageUrl} onChange={(e) => setHero((h) => ({ ...h, imageUrl: e.target.value }))} placeholder="https://..." />
+              <Label>Background Image</Label>
+              <ImageUpload
+                value={hero.imageUrl}
+                onChange={(url) => setHero((h) => ({ ...h, imageUrl: url }))}
+                folder="homepage"
+              />
             </div>
             <div className="space-y-1.5">
               <Label>Image Alt Text</Label>
@@ -256,11 +261,11 @@ export default function AdminHomepagePage() {
                 </div>
               </div>
               <div className="space-y-1.5">
-                <Label>Image Path</Label>
-                <Input
+                <Label>Image</Label>
+                <ImageUpload
                   value={occ.image}
-                  onChange={(e) => setOccasions((items) => items.map((item, idx) => idx === i ? { ...item, image: e.target.value } : item))}
-                  placeholder="/images/occasions/birthday.jpg"
+                  onChange={(url) => setOccasions((items) => items.map((item, idx) => idx === i ? { ...item, image: url } : item))}
+                  folder="occasions"
                 />
               </div>
               <div className="space-y-1.5">

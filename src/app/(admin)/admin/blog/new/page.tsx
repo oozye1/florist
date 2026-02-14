@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { ArrowLeft, Save } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input, Label, Textarea } from '@/components/ui/input'
+import ImageUpload from '@/components/ui/image-upload'
 import { createBlogPost } from '@/lib/firebase/services/blog'
 import { generateSlug } from '@/lib/utils'
 import { toast } from 'sonner'
@@ -124,12 +125,11 @@ export default function NewBlogPostPage() {
             </div>
 
             <div>
-              <Label htmlFor="coverImage">Cover Image URL</Label>
-              <Input
-                id="coverImage"
+              <Label>Cover Image</Label>
+              <ImageUpload
                 value={form.coverImageUrl}
-                onChange={(e) => setForm((prev) => ({ ...prev, coverImageUrl: e.target.value }))}
-                placeholder="https://images.unsplash.com/..."
+                onChange={(url) => setForm((prev) => ({ ...prev, coverImageUrl: url }))}
+                folder="blog"
               />
             </div>
 
