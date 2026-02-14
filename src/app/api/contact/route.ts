@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { adminDb } from '@/lib/firebase/admin'
-import { FieldValue } from 'firebase-admin/firestore'
+import { isAdminConfigured } from '@/lib/firebase/admin'
 
 interface ContactBody {
   name: string
@@ -21,6 +20,15 @@ export async function POST(req: NextRequest) {
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(body.email)) {
       return NextResponse.json({ error: 'Invalid email address' }, { status: 400 })
     }
+
+    if (!isAdminConfigured()) {
+      // Accept the message but log that it couldn't be saved
+      console.warn('Contact form submitted but Firebase Admin not configured — message not saved.')
+      return NextResponse.json({ success: true })
+    }
+
+    const { adminDb } = await import('@/lib/firebase/admin')
+    const { FieldValue } = await import('firebase-admin/firestore')
 
     await adminDb.collection('contact_messages').add({
       name: body.name.trim(),

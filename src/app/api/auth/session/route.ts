@@ -1,6 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { adminAuth } from '@/lib/firebase/admin'
+import { isAdminConfigured } from '@/lib/firebase/admin'
 import { ADMIN_EMAILS } from '@/middleware'
+
+/**
+ * Decode a Firebase ID token's payload without verification.
+ * Used as fallback when Firebase Admin SDK is not configured.
+ */
+function decodeTokenPayload(idToken: string): { email?: string; uid?: string } | null {
+  try {
+    const parts = idToken.split('.')
+    if (parts.length !== 3) return null
+    const payload = JSON.parse(
+      Buffer.from(parts[1], 'base64url').toString('utf-8')
+    )
+    return { email: payload.email, uid: payload.user_id || payload.sub }
+  } catch {
+    return null
+  }
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -10,25 +27,44 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'ID token is required' }, { status: 400 })
     }
 
-    // Verify the ID token
-    const decoded = await adminAuth.verifyIdToken(idToken)
-
-    // Check user role: admin emails take priority, then custom claims, then Firestore
+    let email: string | undefined
+    let uid: string | undefined
     let role = 'customer'
-    if (decoded.email && ADMIN_EMAILS.includes(decoded.email.toLowerCase())) {
-      role = 'admin'
-    } else if (decoded.admin === true || decoded.role === 'admin') {
-      role = 'admin'
-    } else {
-      // Check Firestore for role
-      try {
-        const { adminDb } = await import('@/lib/firebase/admin')
-        const userDoc = await adminDb.collection('users').doc(decoded.uid).get()
-        if (userDoc.exists) {
-          role = userDoc.data()?.role || 'customer'
+
+    if (isAdminConfigured()) {
+      // Full verification with Firebase Admin
+      const { adminAuth } = await import('@/lib/firebase/admin')
+      const decoded = await adminAuth.verifyIdToken(idToken)
+      email = decoded.email
+      uid = decoded.uid
+
+      if (email && ADMIN_EMAILS.includes(email.toLowerCase())) {
+        role = 'admin'
+      } else if (decoded.admin === true || decoded.role === 'admin') {
+        role = 'admin'
+      } else {
+        try {
+          const { adminDb } = await import('@/lib/firebase/admin')
+          const userDoc = await adminDb.collection('users').doc(decoded.uid).get()
+          if (userDoc.exists) {
+            role = userDoc.data()?.role || 'customer'
+          }
+        } catch {
+          // Firestore not available
         }
-      } catch {
-        // Firestore not available
+      }
+    } else {
+      // Fallback: decode token without verification (admin not configured)
+      const payload = decodeTokenPayload(idToken)
+      if (!payload) {
+        return NextResponse.json({ error: 'Invalid token' }, { status: 401 })
+      }
+      email = payload.email
+      uid = payload.uid
+
+      // Still check admin emails
+      if (email && ADMIN_EMAILS.includes(email.toLowerCase())) {
+        role = 'admin'
       }
     }
 

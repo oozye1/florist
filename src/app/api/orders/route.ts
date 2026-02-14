@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { adminDb } from '@/lib/firebase/admin'
-import { adminAuth } from '@/lib/firebase/admin'
+import { isAdminConfigured } from '@/lib/firebase/admin'
 
 export async function GET(req: NextRequest) {
   try {
@@ -10,9 +9,13 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    if (!isAdminConfigured()) {
+      return NextResponse.json({ error: 'Server not fully configured' }, { status: 503 })
+    }
+
+    const { adminAuth, adminDb } = await import('@/lib/firebase/admin')
     const idToken = authHeader.slice(7)
     const decoded = await adminAuth.verifyIdToken(idToken)
-    const userId = decoded.uid
 
     const snapshot = await adminDb
       .collection('orders')

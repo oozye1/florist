@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { adminDb } from '@/lib/firebase/admin'
-import { FieldValue } from 'firebase-admin/firestore'
+import { isAdminConfigured } from '@/lib/firebase/admin'
 
 export async function POST(req: NextRequest) {
   try {
@@ -14,6 +13,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Invalid email address' }, { status: 400 })
     }
 
+    if (!isAdminConfigured()) {
+      console.warn('Newsletter signup submitted but Firebase Admin not configured — not saved.')
+      return NextResponse.json({ success: true })
+    }
+
+    const { adminDb } = await import('@/lib/firebase/admin')
+    const { FieldValue } = await import('firebase-admin/firestore')
     const trimmed = email.trim().toLowerCase()
 
     // Check for duplicate

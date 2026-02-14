@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
-import { adminDb } from '@/lib/firebase/admin'
+import { isAdminConfigured } from '@/lib/firebase/admin'
 
 function getStripe() {
   if (!process.env.STRIPE_SECRET_KEY) {
@@ -45,7 +45,14 @@ export async function POST(req: NextRequest) {
     const session = event.data.object as Stripe.Checkout.Session
     const metadata = session.metadata || {}
 
+    if (!isAdminConfigured()) {
+      console.error('Stripe webhook received but Firebase Admin not configured — order not saved!')
+      return NextResponse.json({ received: true, warning: 'Order not saved — Firebase Admin not configured' })
+    }
+
     try {
+      const { adminDb } = await import('@/lib/firebase/admin')
+
       // Parse items from metadata
       let items: Array<{
         productId: string

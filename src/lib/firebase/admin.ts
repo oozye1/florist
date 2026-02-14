@@ -8,12 +8,25 @@ let _auth: Auth | null = null
 let _db: Firestore | null = null
 let _storage: Storage | null = null
 
+export function isAdminConfigured(): boolean {
+  return !!(
+    process.env.FIREBASE_ADMIN_CLIENT_EMAIL &&
+    process.env.FIREBASE_ADMIN_PRIVATE_KEY
+  )
+}
+
 function getApp(): App {
   if (_app) return _app
 
   if (getApps().length > 0) {
     _app = getApps()[0]
     return _app
+  }
+
+  if (!isAdminConfigured()) {
+    throw new Error(
+      'Firebase Admin not configured. Set FIREBASE_ADMIN_CLIENT_EMAIL and FIREBASE_ADMIN_PRIVATE_KEY environment variables.'
+    )
   }
 
   const serviceAccount: ServiceAccount = {
