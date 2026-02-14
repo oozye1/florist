@@ -1,3 +1,8 @@
+export const ADMIN_EMAILS = [
+  'jamesfairfoul@gmail.com',
+  'amandahardwick68@yahoo.co.uk',
+]
+
 export const SITE_NAME = 'Love Blooms Florist'
 export const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://lovebloomsflorist.co.uk'
 export const SITE_DESCRIPTION =

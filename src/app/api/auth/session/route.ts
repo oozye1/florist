@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { isAdminConfigured } from '@/lib/firebase/admin'
-import { ADMIN_EMAILS } from '@/middleware'
+import { ADMIN_EMAILS } from '@/lib/constants'
 
 /**
  * Decode a Firebase ID token's payload without verification.

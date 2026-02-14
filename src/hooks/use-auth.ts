@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { onAuthStateChanged, type User } from 'firebase/auth'
 import { doc, getDoc } from 'firebase/firestore'
 import { auth, getClientDb } from '@/lib/firebase/config'
+import { ADMIN_EMAILS } from '@/lib/constants'
 import type { UserProfile } from '@/types'
 
 export function useAuth() {
@@ -34,5 +35,9 @@ export function useAuth() {
     return () => unsubscribe()
   }, [])
 
-  return { user, profile, loading, isAdmin: profile?.role === 'admin' }
+  const isAdmin =
+    profile?.role === 'admin' ||
+    (user?.email ? ADMIN_EMAILS.includes(user.email.toLowerCase()) : false)
+
+  return { user, profile, loading, isAdmin }
 }

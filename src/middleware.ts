@@ -1,12 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { ADMIN_EMAILS } from '@/lib/constants'
 
 const PROTECTED_PATHS = ['/account']
 const ADMIN_PATHS = ['/admin']
-
-export const ADMIN_EMAILS = [
-  'jamesfairfoul@gmail.com',
-  'amandahardwick68@yahoo.co.uk',
-]
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl

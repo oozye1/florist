@@ -13,6 +13,7 @@ import {
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useCart } from '@/hooks/use-cart'
+import { useAuth } from '@/hooks/use-auth'
 import SearchDialog from './SearchDialog'
 
 const occasions = [
@@ -41,6 +42,7 @@ export default function Header() {
   const [searchOpen, setSearchOpen] = useState(false)
 
   const itemCount = useCart((state) => state.getItemCount())
+  const { user, isAdmin } = useAuth()
 
   // Track scroll for sticky header shadow
   useEffect(() => {
@@ -226,11 +228,21 @@ export default function Header() {
               <Search className="h-5 w-5" strokeWidth={1.5} />
             </button>
 
+            {/* Admin Dashboard link */}
+            {isAdmin && (
+              <Link
+                href="/admin"
+                className="hidden sm:inline-flex items-center gap-1.5 rounded-full bg-[#1a472a] px-3.5 py-1.5 text-xs font-sans font-medium text-white hover:bg-[#1a472a]/90 transition-colors"
+              >
+                Admin
+              </Link>
+            )}
+
             {/* Account */}
             <Link
-              href="/login"
+              href={user ? '/account' : '/login'}
               className="hidden sm:inline-flex items-center justify-center rounded-full p-2 text-[#1a472a] hover:bg-[#1a472a]/5 hover:text-[#d4a373] transition-colors"
-              aria-label="Account"
+              aria-label={user ? 'My Account' : 'Sign in'}
             >
               <User className="h-5 w-5" strokeWidth={1.5} />
             </Link>
@@ -383,13 +395,25 @@ export default function Header() {
 
           {/* Secondary links */}
           <div className="flex flex-col py-4">
+            {isAdmin && (
+              <Link
+                href="/admin"
+                className="flex items-center gap-3 px-6 py-3.5 text-base font-sans font-medium text-[#1a472a] hover:text-[#d4a373] transition-colors"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 1 1-3 0m3 0a1.5 1.5 0 1 0-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-9.75 0h9.75" />
+                </svg>
+                Admin Dashboard
+              </Link>
+            )}
             <Link
-              href="/login"
+              href={user ? '/account' : '/login'}
               className="flex items-center gap-3 px-6 py-3.5 text-base font-sans text-[#1a472a]/70 hover:text-[#d4a373] transition-colors"
               onClick={() => setMobileMenuOpen(false)}
             >
               <User className="h-5 w-5" strokeWidth={1.5} />
-              My Account
+              {user ? 'My Account' : 'Sign In'}
             </Link>
           </div>
 

@@ -11,8 +11,9 @@ import {
   signInWithPopup,
   type User,
 } from 'firebase/auth'
-import { doc, setDoc, serverTimestamp } from 'firebase/firestore'
+import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore'
 import { auth, getClientDb } from './config'
+import { ADMIN_EMAILS } from '@/lib/constants'
 
 export { onAuthStateChanged, type User }
 
@@ -21,11 +22,12 @@ export async function signUp(email: string, password: string, fullName: string) 
   await updateProfile(credential.user, { displayName: fullName })
 
   // Create user document in Firestore
+  const role = ADMIN_EMAILS.includes(email.toLowerCase()) ? 'admin' : 'customer'
   await setDoc(doc(getClientDb(), 'users', credential.user.uid), {
     uid: credential.user.uid,
     email,
     fullName,
-    role: 'customer',
+    role,
     loyaltyPoints: 100, // Welcome bonus
     createdAt: serverTimestamp(),
   })
@@ -42,19 +44,22 @@ export async function signInWithGoogle() {
   const provider = new GoogleAuthProvider()
   const credential = await signInWithPopup(auth, provider)
 
-  // Create user doc if it doesn't exist
-  await setDoc(
-    doc(getClientDb(), 'users', credential.user.uid),
-    {
+  const userRef = doc(getClientDb(), 'users', credential.user.uid)
+  const userDoc = await getDoc(userRef)
+
+  if (!userDoc.exists()) {
+    // Create user doc only if it doesn't exist
+    const email = credential.user.email || ''
+    const role = ADMIN_EMAILS.includes(email.toLowerCase()) ? 'admin' : 'customer'
+    await setDoc(userRef, {
       uid: credential.user.uid,
-      email: credential.user.email,
+      email,
       fullName: credential.user.displayName || '',
-      role: 'customer',
+      role,
       loyaltyPoints: 100,
       createdAt: serverTimestamp(),
-    },
-    { merge: true }
-  )
+    })
+  }
 
   return credential.user
 }
