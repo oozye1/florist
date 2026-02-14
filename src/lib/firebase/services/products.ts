@@ -34,29 +34,46 @@ export async function getProducts(options?: {
 }) {
   const constraints = []
 
-  if (options?.active !== false) {
-    constraints.push(where('isActive', '==', true))
-  }
-
-  if (options?.category) {
-    constraints.push(where('category', '==', options.category))
-  }
-
-  if (options?.featured) {
-    constraints.push(where('isFeatured', '==', true))
-  }
+  // Firestore only allows one inequality/array-contains per query without
+  // composite indexes. Use a single where() in Firestore and filter the rest
+  // client-side to avoid needing composite index deployment.
 
   if (options?.occasion) {
+    // array-contains is the primary constraint — filter everything else client-side
     constraints.push(where('occasions', 'array-contains', options.occasion))
+  } else if (options?.category) {
+    constraints.push(where('category', '==', options.category))
+    if (options?.active !== false) {
+      constraints.push(where('isActive', '==', true))
+    }
+    if (options?.featured) {
+      constraints.push(where('isFeatured', '==', true))
+    }
+  } else {
+    if (options?.active !== false) {
+      constraints.push(where('isActive', '==', true))
+    }
+    if (options?.featured) {
+      constraints.push(where('isFeatured', '==', true))
+    }
   }
 
-  if (options?.maxResults) {
-    constraints.push(firestoreLimit(options.maxResults))
+  let products = await getDocuments<Product>(COLLECTION, constraints)
+
+  // Client-side filtering for fields not included in the Firestore query
+  if (options?.occasion) {
+    if (options?.active !== false) {
+      products = products.filter((p) => p.isActive)
+    }
+    if (options?.category) {
+      products = products.filter((p) => p.category === options.category)
+    }
+    if (options?.featured) {
+      products = products.filter((p) => p.isFeatured)
+    }
   }
 
-  const products = await getDocuments<Product>(COLLECTION, constraints)
-
-  // Client-side sorting (Firestore compound queries have limitations)
+  // Client-side sorting
   if (options?.sortBy) {
     switch (options.sortBy) {
       case 'price_asc':
@@ -76,6 +93,10 @@ export async function getProducts(options?: {
         })
         break
     }
+  }
+
+  if (options?.maxResults) {
+    products = products.slice(0, options.maxResults)
   }
 
   return products
