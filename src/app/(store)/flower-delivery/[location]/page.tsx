@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { UK_LOCATIONS, SITE_URL, SITE_NAME } from '@/lib/constants'
-import { SEED_PRODUCTS } from '@/lib/seed-data'
+import { getProducts } from '@/lib/firebase/services/products'
 import ProductCard from '@/components/store/ProductCard'
 import { Button } from '@/components/ui/button'
 import { MapPin, Truck, Clock, Shield } from 'lucide-react'
@@ -34,7 +34,12 @@ export default async function LocationPage({ params }: LocationPageProps) {
   const name = loc?.name || 'Your Area'
 
   // Show 8 featured products
-  const products = SEED_PRODUCTS.filter((p) => p.isActive && p.isFeatured).slice(0, 8)
+  let products: import('@/types').Product[] = []
+  try {
+    products = await getProducts({ featured: true, maxResults: 8 })
+  } catch {
+    // Firestore not available
+  }
 
   return (
     <div>

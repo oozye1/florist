@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { Search, X, Loader2 } from 'lucide-react'
 import { formatPrice } from '@/lib/utils'
-import { SEED_PRODUCTS } from '@/lib/seed-data'
 import type { Product } from '@/types'
 
 interface SearchDialogProps {
@@ -18,7 +17,7 @@ export default function SearchDialog({ open, onClose }: SearchDialogProps) {
   const inputRef = useRef<HTMLInputElement>(null)
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<Product[]>([])
-  const [allProducts, setAllProducts] = useState<Product[]>(SEED_PRODUCTS)
+  const [allProducts, setAllProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(false)
   const [selectedIndex, setSelectedIndex] = useState(-1)
 

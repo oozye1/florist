@@ -10,7 +10,6 @@ import { SITE_NAME, SITE_URL } from '@/lib/constants'
 import { getProducts } from '@/lib/firebase/services/products'
 import { getActivePlans } from '@/lib/firebase/services/subscriptions'
 import { getHomepageContent } from '@/lib/firebase/services/homepage'
-import { SEED_PRODUCTS } from '@/lib/seed-data'
 
 export const metadata: Metadata = {
   title: `${SITE_NAME} | Luxury Flower Delivery UK`,
@@ -23,12 +22,10 @@ export const metadata: Metadata = {
 
 async function getFeaturedProducts() {
   try {
-    const products = await getProducts({ featured: true, maxResults: 8 })
-    if (products.length > 0) return products
+    return await getProducts({ featured: true, maxResults: 8 })
   } catch {
-    // Firestore not configured — fall back to seed data
+    return []
   }
-  return SEED_PRODUCTS.filter((p) => p.isFeatured).slice(0, 8)
 }
 
 async function getSubscriptionPlans() {

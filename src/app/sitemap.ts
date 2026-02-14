@@ -1,16 +1,22 @@
 import type { MetadataRoute } from 'next'
-import { SEED_PRODUCTS } from '@/lib/seed-data'
-import { OCCASIONS, CATEGORIES, UK_LOCATIONS } from '@/lib/constants'
+import { OCCASIONS, UK_LOCATIONS } from '@/lib/constants'
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://lovebloomsflorist.co.uk'
 
-export default function sitemap(): MetadataRoute.Sitemap {
-  const products = SEED_PRODUCTS.filter((p) => p.isActive).map((p) => ({
-    url: `${SITE_URL}/products/${p.slug}`,
-    lastModified: new Date(),
-    changeFrequency: 'weekly' as const,
-    priority: 0.8,
-  }))
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  let products: MetadataRoute.Sitemap = []
+  try {
+    const { getProducts } = await import('@/lib/firebase/services/products')
+    const allProducts = await getProducts({ active: true })
+    products = allProducts.map((p) => ({
+      url: `${SITE_URL}/products/${p.slug}`,
+      lastModified: new Date(),
+      changeFrequency: 'weekly' as const,
+      priority: 0.8,
+    }))
+  } catch {
+    // Firestore not available
+  }
 
   const occasions = OCCASIONS.map((o) => ({
     url: `${SITE_URL}/occasions/${o.slug}`,

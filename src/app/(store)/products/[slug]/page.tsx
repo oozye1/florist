@@ -3,7 +3,6 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { getProductBySlug, getProducts } from '@/lib/firebase/services/products'
-import { SEED_PRODUCTS } from '@/lib/seed-data'
 import { SITE_NAME, SITE_URL } from '@/lib/constants'
 import { formatPrice } from '@/lib/utils'
 import AddToCartSection from '@/components/store/AddToCartSection'
@@ -22,17 +21,16 @@ async function findProduct(slug: string) {
   } catch {
     // Firestore not configured
   }
-  return SEED_PRODUCTS.find((p) => p.slug === slug) || null
+  return null
 }
 
 export async function generateStaticParams() {
   try {
     const products = await getProducts({ active: true })
-    if (products.length > 0) return products.map((p) => ({ slug: p.slug }))
+    return products.map((p) => ({ slug: p.slug }))
   } catch {
-    // fallback
+    return []
   }
-  return SEED_PRODUCTS.filter((p) => p.isActive).map((p) => ({ slug: p.slug }))
 }
 
 export async function generateMetadata({ params }: ProductPageProps): Promise<Metadata> {
@@ -65,12 +63,11 @@ export default async function ProductPage({ params }: ProductPageProps) {
   if (!product || !product.isActive) notFound()
 
   // Related products
-  let allProducts
+  let allProducts: import('@/types').Product[] = []
   try {
-    const firestoreProducts = await getProducts({ category: product.category })
-    allProducts = firestoreProducts.length > 0 ? firestoreProducts : SEED_PRODUCTS
+    allProducts = await getProducts({ category: product.category })
   } catch {
-    allProducts = SEED_PRODUCTS
+    // Firestore not available
   }
   const related = allProducts.filter(
     (p) =>

@@ -2,7 +2,6 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import Image from 'next/image'
 import { getProducts } from '@/lib/firebase/services/products'
-import { SEED_PRODUCTS } from '@/lib/seed-data'
 import { CATEGORIES, OCCASIONS } from '@/lib/constants'
 import { formatPrice } from '@/lib/utils'
 import ProductCard from '@/components/store/ProductCard'
@@ -32,16 +31,15 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
   const currentPage = parseInt(page || '1', 10)
   const perPage = 12
 
-  // Fetch products from Firestore with fallback to seed data
-  let allProducts
+  // Fetch products from Firestore
+  let allProducts: import('@/types').Product[] = []
   try {
-    const firestoreProducts = await getProducts({
+    allProducts = await getProducts({
       category: category as CategorySlug | undefined,
       occasion: occasion || undefined,
     })
-    allProducts = firestoreProducts.length > 0 ? firestoreProducts : SEED_PRODUCTS
   } catch {
-    allProducts = SEED_PRODUCTS
+    // Firestore not available
   }
 
   let filtered = allProducts.filter((p) => p.isActive)

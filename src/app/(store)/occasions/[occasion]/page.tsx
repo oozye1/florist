@@ -2,7 +2,6 @@ import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { OCCASIONS } from '@/lib/constants'
 import { getProducts } from '@/lib/firebase/services/products'
-import { SEED_PRODUCTS } from '@/lib/seed-data'
 import ProductCard from '@/components/store/ProductCard'
 
 interface OccasionPageProps {
@@ -44,16 +43,11 @@ export default async function OccasionPage({ params }: OccasionPageProps) {
     notFound()
   }
 
-  let filteredProducts
+  let filteredProducts: import('@/types').Product[] = []
   try {
-    const firestoreProducts = await getProducts({ occasion: slug })
-    filteredProducts = firestoreProducts.length > 0 ? firestoreProducts : SEED_PRODUCTS.filter(
-      (product) => product.isActive && product.occasions.includes(slug)
-    )
+    filteredProducts = await getProducts({ occasion: slug })
   } catch {
-    filteredProducts = SEED_PRODUCTS.filter(
-      (product) => product.isActive && product.occasions.includes(slug)
-    )
+    // Firestore not available
   }
 
   return (
