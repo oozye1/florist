@@ -11,6 +11,8 @@ import { getProducts } from '@/lib/firebase/services/products'
 import { getActivePlans } from '@/lib/firebase/services/subscriptions'
 import { getHomepageContent } from '@/lib/firebase/services/homepage'
 
+export const revalidate = 60 // re-fetch homepage content every 60 seconds
+
 export const metadata: Metadata = {
   title: `${SITE_NAME} | Luxury Flower Delivery UK`,
   description:
