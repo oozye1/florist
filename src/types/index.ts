@@ -355,6 +355,53 @@ export interface LocationPage {
 }
 
 // ============================================
+// Homepage Content
+// ============================================
+
+export interface HeroContent {
+  imageUrl: string
+  imageAlt: string
+  heading: string
+  subheading: string
+  primaryButton: { text: string; href: string }
+  secondaryButton: { text: string; href: string }
+}
+
+export interface USPItem {
+  icon: string
+  text: string
+}
+
+export interface OccasionItem {
+  name: string
+  slug: string
+  image: string
+  description: string
+}
+
+export interface TestimonialItem {
+  quote: string
+  name: string
+  location: string
+  rating: number
+}
+
+export interface NewsletterContent {
+  heading: string
+  description: string
+}
+
+export interface HomepageContent {
+  id: string
+  hero: HeroContent
+  uspItems: USPItem[]
+  occasions: OccasionItem[]
+  testimonials: TestimonialItem[]
+  newsletter: NewsletterContent
+  updatedAt?: Timestamp
+}
+
+// ============================================
 // Store Settings
 // ============================================
 

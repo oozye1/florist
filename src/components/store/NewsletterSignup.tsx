@@ -4,8 +4,16 @@ import { useState } from 'react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import type { NewsletterContent } from '@/types'
 
-export default function NewsletterSignup() {
+interface NewsletterSignupProps {
+  content?: NewsletterContent
+}
+
+export default function NewsletterSignup({ content }: NewsletterSignupProps) {
+  const heading = content?.heading || 'Stay in Bloom'
+  const description = content?.description || 'Join our mailing list for exclusive offers, seasonal inspiration, and 15% off your first order.'
+
   const [email, setEmail] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
 
@@ -50,13 +58,12 @@ export default function NewsletterSignup() {
         <div className="mx-auto max-w-xl text-center">
           {/* Heading */}
           <h2 className="font-serif text-3xl font-bold text-accent-foreground sm:text-4xl">
-            Stay in Bloom
+            {heading}
           </h2>
 
           {/* Subtitle */}
           <p className="mt-4 text-accent-foreground/75">
-            Join our mailing list for exclusive offers, seasonal
-            inspiration, and 15% off your first order.
+            {description}
           </p>
 
           {/* Form */}

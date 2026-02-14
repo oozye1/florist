@@ -142,3 +142,46 @@ export const settingsSchema = z.object({
 })
 
 export type SettingsFormData = z.infer<typeof settingsSchema>
+
+// ============================================
+// Homepage Content Schema
+// ============================================
+
+export const homepageContentSchema = z.object({
+  hero: z.object({
+    imageUrl: z.string().min(1, 'Image URL is required'),
+    imageAlt: z.string().min(1, 'Alt text is required'),
+    heading: z.string().min(1, 'Heading is required').max(100),
+    subheading: z.string().min(1, 'Subheading is required').max(300),
+    primaryButton: z.object({
+      text: z.string().min(1, 'Button text is required'),
+      href: z.string().min(1, 'Button link is required'),
+    }),
+    secondaryButton: z.object({
+      text: z.string().min(1, 'Button text is required'),
+      href: z.string().min(1, 'Button link is required'),
+    }),
+  }),
+  uspItems: z.array(z.object({
+    icon: z.string().min(1, 'Icon is required'),
+    text: z.string().min(1, 'Text is required'),
+  })).min(1).max(6),
+  occasions: z.array(z.object({
+    name: z.string().min(1, 'Name is required'),
+    slug: z.string().min(1, 'Slug is required'),
+    image: z.string().min(1, 'Image is required'),
+    description: z.string().min(1, 'Description is required'),
+  })).min(1),
+  testimonials: z.array(z.object({
+    quote: z.string().min(1, 'Quote is required'),
+    name: z.string().min(1, 'Name is required'),
+    location: z.string().min(1, 'Location is required'),
+    rating: z.number().min(1).max(5),
+  })).min(1),
+  newsletter: z.object({
+    heading: z.string().min(1, 'Heading is required'),
+    description: z.string().min(1, 'Description is required'),
+  }),
+})
+
+export type HomepageContentFormData = z.infer<typeof homepageContentSchema>

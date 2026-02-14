@@ -3,53 +3,47 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Star, Quote } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import type { TestimonialItem } from '@/types'
 
-interface Testimonial {
-  quote: string
-  name: string
-  location: string
-  rating: number
-}
-
-const testimonials: Testimonial[] = [
+const DEFAULT_TESTIMONIALS: TestimonialItem[] = [
   {
-    quote:
-      'The roses were absolutely stunning. My wife was over the moon!',
+    quote: 'The roses were absolutely stunning. My wife was over the moon!',
     name: 'James T.',
     location: 'London',
     rating: 5,
   },
   {
-    quote:
-      'Beautiful sympathy arrangement. Delivered on time with such care.',
+    quote: 'Beautiful sympathy arrangement. Delivered on time with such care.',
     name: 'Sarah M.',
     location: 'Manchester',
     rating: 5,
   },
   {
-    quote:
-      'I use Love Blooms for every occasion. Never disappointed!',
+    quote: 'I use Love Blooms for every occasion. Never disappointed!',
     name: 'Emily R.',
     location: 'Bristol',
     rating: 5,
   },
   {
-    quote:
-      'The subscription service is brilliant. Fresh flowers every month!',
+    quote: 'The subscription service is brilliant. Fresh flowers every month!',
     name: 'Charlotte W.',
     location: 'Edinburgh',
     rating: 5,
   },
   {
-    quote:
-      'Wedding flowers were beyond our dreams. Thank you!',
+    quote: 'Wedding flowers were beyond our dreams. Thank you!',
     name: 'David & Anna K.',
     location: 'Leeds',
     rating: 5,
   },
 ]
 
-export default function TestimonialCarousel() {
+interface TestimonialCarouselProps {
+  testimonials?: TestimonialItem[]
+}
+
+export default function TestimonialCarousel({ testimonials }: TestimonialCarouselProps) {
+  const items = testimonials && testimonials.length > 0 ? testimonials : DEFAULT_TESTIMONIALS
   const [activeIndex, setActiveIndex] = useState(0)
   const [isPaused, setIsPaused] = useState(false)
 
@@ -62,11 +56,11 @@ export default function TestimonialCarousel() {
     if (isPaused) return
 
     const interval = setInterval(() => {
-      setActiveIndex((prev) => (prev + 1) % testimonials.length)
+      setActiveIndex((prev) => (prev + 1) % items.length)
     }, 5000)
 
     return () => clearInterval(interval)
-  }, [isPaused])
+  }, [isPaused, items.length])
 
   return (
     <section className="py-16 sm:py-20">
@@ -92,7 +86,7 @@ export default function TestimonialCarousel() {
                 transform: `translateX(-${activeIndex * 100}%)`,
               }}
             >
-              {testimonials.map((testimonial, index) => (
+              {items.map((testimonial, index) => (
                 <div
                   key={index}
                   className="w-full flex-shrink-0 px-4"
@@ -140,7 +134,7 @@ export default function TestimonialCarousel() {
 
           {/* Dot Indicators */}
           <div className="mt-8 flex items-center justify-center gap-2.5">
-            {testimonials.map((_, index) => (
+            {items.map((_, index) => (
               <button
                 key={index}
                 onClick={() => goToSlide(index)}

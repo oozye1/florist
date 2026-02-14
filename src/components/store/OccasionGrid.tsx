@@ -1,8 +1,15 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { OCCASIONS } from '@/lib/constants'
+import type { OccasionItem } from '@/types'
 
-export default function OccasionGrid() {
+interface OccasionGridProps {
+  occasions?: OccasionItem[]
+}
+
+export default function OccasionGrid({ occasions }: OccasionGridProps) {
+  const items = occasions && occasions.length > 0 ? occasions : OCCASIONS
+
   return (
     <section className="py-16 sm:py-20 bg-muted/50">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -18,7 +25,7 @@ export default function OccasionGrid() {
 
         {/* Occasion Grid */}
         <div className="mt-12 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 lg:gap-6">
-          {OCCASIONS.map((occasion) => (
+          {items.map((occasion) => (
             <Link
               key={occasion.slug}
               href={`/occasions/${occasion.slug}`}
