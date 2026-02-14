@@ -22,10 +22,11 @@ import {
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { useFirestoreQuery } from '@/hooks/use-firestore-query'
-import { getAllProducts, deleteProduct, updateProduct } from '@/lib/firebase/services/products'
+import { getAllProducts, createProduct, deleteProduct, updateProduct } from '@/lib/firebase/services/products'
 import { formatPrice, cn } from '@/lib/utils'
 import { safeTimestamp, relativeTime } from '@/lib/admin-utils'
 import { CATEGORIES } from '@/lib/constants'
+import { SEED_PRODUCTS } from '@/lib/seed-data'
 import type { Product, CategorySlug } from '@/types'
 
 // ============================================
@@ -257,6 +258,26 @@ export default function AdminProductsPage() {
   // Empty state
   // ============================================
 
+  const [importing, setImporting] = useState(false)
+
+  const handleImportDemoProducts = async () => {
+    setImporting(true)
+    try {
+      let imported = 0
+      for (const product of SEED_PRODUCTS) {
+        const { id: _id, createdAt: _ca, updatedAt: _ua, ...data } = product
+        await createProduct(data as Omit<Product, 'id' | 'createdAt' | 'updatedAt'>)
+        imported++
+      }
+      toast.success(`${imported} demo products imported successfully`)
+      refetch()
+    } catch {
+      toast.error('Failed to import demo products')
+    } finally {
+      setImporting(false)
+    }
+  }
+
   if (!products || products.length === 0) {
     return (
       <div className="space-y-6">
@@ -274,14 +295,20 @@ export default function AdminProductsPage() {
             </div>
             <h2 className="text-lg font-semibold text-gray-900 mb-1">No products yet</h2>
             <p className="text-sm text-muted-foreground mb-6 text-center max-w-sm">
-              Get started by adding your first product to the catalogue.
+              Import demo products to get started quickly, or add your own from scratch.
             </p>
-            <Link href="/admin/products/new">
-              <Button>
-                <Plus className="h-4 w-4" />
-                Add your first product
+            <div className="flex gap-3">
+              <Button onClick={handleImportDemoProducts} isLoading={importing} variant="outline">
+                <Package className="h-4 w-4" />
+                Import {SEED_PRODUCTS.length} Demo Products
               </Button>
-            </Link>
+              <Link href="/admin/products/new">
+                <Button>
+                  <Plus className="h-4 w-4" />
+                  Add Product
+                </Button>
+              </Link>
+            </div>
           </div>
         </div>
       </div>
