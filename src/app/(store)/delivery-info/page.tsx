@@ -2,9 +2,9 @@ import type { Metadata } from 'next'
 import { Truck, Clock, MapPin, Package, Check } from 'lucide-react'
 
 export const metadata: Metadata = {
-  title: 'Delivery Information',
+  title: 'UK Flower Delivery | Same-Day, Next-Day & Free Delivery Over £50',
   description:
-    'Learn about Love Blooms Florist delivery options, areas, fees, and same-day cutoff times. Free delivery on orders over £50.',
+    'Love Blooms delivers across the UK. Same-day delivery when ordered before 2pm, next-day guaranteed by midnight. Free standard delivery over £50. Hand-delivered with care to London, Manchester, Birmingham & more.',
 }
 
 const deliveryOptions = [

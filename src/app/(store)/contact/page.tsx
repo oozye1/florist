@@ -3,9 +3,9 @@ import { MapPin, Phone, Mail, Clock } from 'lucide-react'
 import ContactForm from './ContactForm'
 
 export const metadata: Metadata = {
-  title: 'Contact Us',
+  title: 'Contact Us | Get in Touch with Love Blooms Florist',
   description:
-    'Get in touch with Love Blooms Florist. Visit our London shop, call us, or send a message. We\'d love to hear from you.',
+    'Have a question or need a bespoke arrangement? Contact Love Blooms Florist by phone, email or visit our London shop. Open Mon-Sat. We reply within 2 hours during business hours.',
 }
 
 const contactDetails = [

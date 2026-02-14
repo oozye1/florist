@@ -20,10 +20,14 @@ export async function generateMetadata({ params }: LocationPageProps): Promise<M
   const name = loc?.name || 'Your Area'
 
   return {
-    title: `Flower Delivery in ${name} | Same Day & Next Day`,
-    description: `Order luxury flower delivery in ${name}. Hand-crafted bouquets, same-day delivery available. Free delivery over £50. From ${SITE_NAME}.`,
+    title: `Flower Delivery ${name} | Same Day & Next Day | From £29.99`,
+    description: `Order stunning flower delivery in ${name}. Hand-crafted luxury bouquets, roses & arrangements. Same-day delivery when you order before 2pm. Free delivery over £50. Freshness guaranteed for 7 days. ${SITE_NAME}.`,
     alternates: {
       canonical: `${SITE_URL}/flower-delivery/${location}`,
+    },
+    openGraph: {
+      title: `Flower Delivery in ${name} | ${SITE_NAME}`,
+      description: `Beautiful hand-crafted flowers delivered to your door in ${name}. Same-day & next-day delivery available.`,
     },
   }
 }

@@ -1,9 +1,9 @@
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'Frequently Asked Questions',
+  title: 'FAQ | Delivery, Orders, Returns & Flower Care Questions Answered',
   description:
-    'Find answers to common questions about ordering, delivery, returns, and subscriptions at Love Blooms Florist.',
+    'Got a question? Find answers about flower delivery times, same-day ordering, returns policy, subscription plans, and flower care tips at Love Blooms Florist.',
 }
 
 interface FAQItem {

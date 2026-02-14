@@ -4,9 +4,9 @@ import Image from 'next/image'
 import { getPublishedPosts } from '@/lib/firebase/services/blog'
 
 export const metadata: Metadata = {
-  title: 'Blog | Floral Inspiration & Tips',
+  title: 'Flower Blog | Care Tips, Seasonal Guides & Floral Inspiration',
   description:
-    'Discover floral inspiration, care tips, seasonal guides, and the latest trends from Love Blooms Florist.',
+    'Expert flower care tips, seasonal arrangement guides, and floral inspiration from Love Blooms Florist. Learn how to keep your flowers fresh, discover trending bouquets, and find ideas for every occasion.',
 }
 
 const FALLBACK_POSTS = [

@@ -38,17 +38,28 @@ export async function generateMetadata({ params }: ProductPageProps): Promise<Me
   const product = await findProduct(slug)
   if (!product) return { title: 'Product Not Found' }
 
+  const autoTitle = `${product.name} | ${product.categoryName} - Buy Online with Free UK Delivery`
+  const autoDescription = `Order ${product.name} from ${SITE_NAME}. ${product.description} ${product.allowsSameDay ? 'Same-day delivery available. ' : ''}Free delivery over £50. From £${product.price.toFixed(2)}.`
+
   return {
-    title: product.seoTitle || `${product.name} - ${product.categoryName}`,
-    description: product.seoDescription || product.description,
+    title: product.seoTitle || autoTitle,
+    description: product.seoDescription || autoDescription,
     openGraph: {
-      title: product.name,
+      title: `${product.name} | ${SITE_NAME}`,
       description: product.description,
       images: product.images.map((img) => ({
         url: img.url,
         alt: img.alt,
+        width: 800,
+        height: 800,
       })),
       type: 'website',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: product.name,
+      description: product.description,
+      images: product.images.filter((i) => i.isPrimary).map((i) => i.url),
     },
     alternates: {
       canonical: `${SITE_URL}/products/${slug}`,

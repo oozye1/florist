@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
-import { OCCASIONS } from '@/lib/constants'
+import { OCCASIONS, SITE_URL, SITE_NAME } from '@/lib/constants'
 import { getProducts } from '@/lib/firebase/services/products'
 import ProductCard from '@/components/store/ProductCard'
 
@@ -25,10 +25,13 @@ export async function generateMetadata({
   }
 
   return {
-    title: `${occasion.name} Flowers`,
-    description: occasion.description,
+    title: `${occasion.name} Flowers | Stunning ${occasion.name} Bouquets Delivered`,
+    description: `Shop beautiful ${occasion.name.toLowerCase()} flowers from ${SITE_NAME}. ${occasion.description} Same-day & next-day delivery available. Free delivery over £50.`,
+    alternates: {
+      canonical: `${SITE_URL}/occasions/${slug}`,
+    },
     openGraph: {
-      title: `${occasion.name} Flowers | Love Blooms Florist`,
+      title: `${occasion.name} Flowers | ${SITE_NAME}`,
       description: occasion.description,
       images: [{ url: occasion.image, alt: `${occasion.name} flowers` }],
     },

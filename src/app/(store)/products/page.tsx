@@ -9,9 +9,9 @@ import SortSelect from '@/components/store/SortSelect'
 import type { CategorySlug } from '@/types'
 
 export const metadata: Metadata = {
-  title: 'Shop All Flowers & Bouquets',
+  title: 'Shop All Flowers & Bouquets | Roses, Luxury Arrangements & Letterbox Flowers',
   description:
-    'Browse our complete collection of luxury hand-crafted bouquets, roses, plants, hampers and letterbox flowers. Same-day delivery available across the UK.',
+    'Browse our complete collection of luxury hand-crafted bouquets, premium roses, elegant plants, gift hampers and letterbox flowers. Same-day & next-day delivery across the UK. Free delivery over £50. Order online now.',
 }
 
 interface ProductsPageProps {

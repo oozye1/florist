@@ -3,9 +3,9 @@ import Image from 'next/image'
 import { Leaf, Heart, Users } from 'lucide-react'
 
 export const metadata: Metadata = {
-  title: 'About Us',
+  title: 'About Love Blooms Florist | Family-Run Luxury Florist Since 2010',
   description:
-    'Learn about Love Blooms Florist — a family-run florist based in London, dedicated to crafting beautiful, sustainable floral arrangements since 2010.',
+    'Meet Love Blooms Florist — a passionate family-run florist based in London. We handcraft stunning, sustainable floral arrangements using the freshest seasonal blooms. Trusted by thousands of customers across the UK.',
 }
 
 const values = [

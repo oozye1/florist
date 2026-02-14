@@ -4,9 +4,9 @@ import Image from 'next/image'
 import { OCCASIONS } from '@/lib/constants'
 
 export const metadata: Metadata = {
-  title: 'Shop by Occasion',
+  title: 'Shop Flowers by Occasion | Birthday, Anniversary, Sympathy & More',
   description:
-    'Find the perfect flowers for every occasion — birthdays, anniversaries, weddings, sympathy, and more. Hand-crafted bouquets delivered with love.',
+    'Find the perfect flowers for every occasion. Beautiful birthday bouquets, romantic anniversary roses, thoughtful sympathy arrangements & more. Same-day delivery available across the UK. Free delivery over £50.',
 }
 
 export default function OccasionsPage() {
