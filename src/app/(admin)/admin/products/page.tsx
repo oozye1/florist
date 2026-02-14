@@ -56,6 +56,7 @@ export default function AdminProductsPage() {
   const [currentPage, setCurrentPage] = useState(1)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [bulkLoading, setBulkLoading] = useState(false)
+  const [importing, setImporting] = useState(false)
 
   // ============================================
   // Filtering, Sorting, Pagination
@@ -257,8 +258,6 @@ export default function AdminProductsPage() {
   // ============================================
   // Empty state
   // ============================================
-
-  const [importing, setImporting] = useState(false)
 
   const handleImportDemoProducts = async () => {
     setImporting(true)
